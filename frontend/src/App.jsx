@@ -175,7 +175,7 @@ function App() {
     }
   };
 
-  const handlePrint = useReactToPrint({
+  const handlePrintAction = useReactToPrint({
     contentRef: printRef,
     pageStyle: `
       @page {
@@ -198,67 +198,24 @@ function App() {
     `
   });
 
+  useEffect(() => {
+    if (isPrinting && printItem) {
+      // Small delay to ensure the barcode SVG has fully finished its internal render
+      const timer = setTimeout(() => {
+        handlePrintAction();
+        setIsPrinting(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isPrinting, printItem, handlePrintAction]);
+
   const triggerPrint = (item) => {
     setPrintItem(item);
-    setTimeout(() => {
-      handlePrint();
-    }, 100);
+    setIsPrinting(true);
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
-      {/* Scanner Modal */}
-      {scannedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><ScanLine className="w-6 h-6 text-blue-600" /> Item Scanned</h2>
-            <div className="mb-6 bg-gray-50 p-4 rounded border">
-              <div className="font-medium text-lg text-gray-900">{scannedItem.name}</div>
-              <div className="text-sm text-gray-500 mb-2">SKU: {scannedItem.sku || 'N/A'}</div>
-              <div className="text-blue-700 font-bold text-lg">Current Stock: {scannedItem.quantity}</div>
-            </div>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Quantity Adjustment</label>
-              <input 
-                type="number" 
-                min="1" 
-                value={scanQuantity} 
-                onChange={(e) => setScanQuantity(e.target.value)}
-                className="w-full border-2 border-blue-300 rounded p-3 text-xl font-bold text-center"
-                autoFocus
-                onFocus={(e) => e.target.select()}
-              />
-            </div>
-            <div className="flex gap-3 justify-end">
-              <button 
-                onClick={() => {
-                  handleUpdateStock(scannedItem.id, scannedItem.quantity, -Number(scanQuantity));
-                  setScannedItem(null);
-                }} 
-                className="flex-1 bg-red-100 text-red-700 border border-red-200 px-4 py-3 rounded-lg font-bold hover:bg-red-200 flex justify-center items-center gap-2"
-              >
-                Sale (- Remove)
-              </button>
-              <button 
-                onClick={() => {
-                  handleUpdateStock(scannedItem.id, scannedItem.quantity, Number(scanQuantity));
-                  setScannedItem(null);
-                }} 
-                className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-green-700 flex justify-center items-center gap-2"
-              >
-                Stock Up (+ Add)
-              </button>
-            </div>
-            <button 
-              onClick={() => setScannedItem(null)} 
-              className="w-full mt-3 bg-white text-gray-600 border border-gray-300 px-4 py-2 rounded-lg font-medium hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="max-w-6xl mx-auto">
         <header className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-2 text-2xl font-bold text-gray-800">
@@ -387,12 +344,12 @@ function App() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    {item.barcode ? (
+                    {item.sku ? (
                       <div className="scale-75 origin-left">
-                        <Barcode value={item.barcode} height={40} fontSize={14} width={1.5} />
+                        <Barcode value={item.sku} height={40} fontSize={14} width={1.5} />
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-500">No barcode</span>
+                      <span className="text-sm text-gray-500">No SKU (Barcode)</span>
                     )}
                   </td>
                   <td className="px-6 py-4">
