@@ -330,11 +330,11 @@ function App() {
         <div ref={printRef} className="print-container bg-white flex flex-col items-center justify-center h-full w-full box-border" style={{ width: '50mm', height: '25mm' }}>
           {printItem && printItem.sku ? (
             <>
-              <div className="text-[12px] font-bold truncate w-full text-center px-1 pt-1 mb-[-2px]">
+              <div className="text-[14px] font-bold truncate w-[90%] text-center pt-2">
                 {printItem.name}
               </div>
-              <div className="scale-[0.7] origin-top">
-                <Barcode value={printItem.sku} height={35} fontSize={16} width={1.5} margin={0} />
+              <div className="scale-[0.8] origin-top mt-1">
+                <Barcode value={printItem.sku} height={40} fontSize={16} width={1.5} margin={0} displayValue={true} />
               </div>
             </>
           ) : null}
