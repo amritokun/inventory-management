@@ -39,11 +39,9 @@ function App() {
           const item = itemsRef.current.find(i => i.sku === barcodeStr || i.barcode === barcodeStr);
           if (item) {
             if (scannerMode === 'add') {
-              handleUpdateStock(item.id, item.quantity, 1);
+              handleUpdateStock(item.id, 1);
             } else if (scannerMode === 'remove') {
-              if (item.quantity > 0) {
-                handleUpdateStock(item.id, item.quantity, -1);
-              }
+              handleUpdateStock(item.id, -1);
             }
           } else {
             console.warn(`No item found for scanned barcode: ${barcodeStr}`);
@@ -69,18 +67,28 @@ function App() {
   useEffect(() => {
     let html5QrcodeScanner;
     if (showScanner) {
-      html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: {width: 250, height: 100} },
-        /* verbose= */ false
-      );
-      html5QrcodeScanner.render((decodedText) => {
-        setFormData(prev => ({ ...prev, barcode: decodedText }));
-        setShowScanner(false);
-        html5QrcodeScanner.clear();
-      }, (error) => {
-        // Handle scan errors quietly
-      });
+      const timer = setTimeout(() => {
+        const readerElement = document.getElementById("reader");
+        if (readerElement) {
+          html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader",
+            { fps: 10, qrbox: {width: 250, height: 100} },
+            /* verbose= */ false
+          );
+          html5QrcodeScanner.render((decodedText) => {
+            setFormData(prev => ({ ...prev, barcode: decodedText }));
+            setShowScanner(false);
+          }, (error) => {
+            // Handle scan errors quietly
+          });
+        }
+      }, 100);
+      return () => {
+        clearTimeout(timer);
+        if (html5QrcodeScanner) {
+          html5QrcodeScanner.clear().catch(error => console.error("Failed to clear scanner", error));
+        }
+      };
     }
     return () => {
       if (html5QrcodeScanner) {
@@ -160,20 +168,28 @@ function App() {
     }
   };
 
-  const handleUpdateStock = async (id, currentQuantity, change) => {
-    const newQuantity = Number(currentQuantity) + change;
-    if (newQuantity < 0) return; // Prevent negative stock
+  const handleUpdateStock = async (id, change) => {
+    let updatedQuantity;
+    
+    setItems(prevItems => {
+      const newItems = (prevItems || []).map(item => {
+        if (item.id === id) {
+          updatedQuantity = Math.max(0, Number(item.quantity) + change);
+          return { ...item, quantity: updatedQuantity };
+        }
+        return item;
+      });
+      return newItems;
+    });
 
-    // Optimistically update UI
-    setItems(prevItems => (prevItems || []).map(item => item.id === id ? { ...item, quantity: newQuantity } : item));
-
-    try {
-      await axios.patch(`/api/items/${id}/stock`, { quantity: newQuantity });
-    } catch (err) {
-      console.error('Error updating stock', err);
-      // Revert on failure by refetching
-      fetchItems();
-      alert('Error updating stock');
+    if (updatedQuantity !== undefined) {
+      try {
+        await axios.patch(`/api/items/${id}/stock`, { quantity: updatedQuantity });
+      } catch (err) {
+        console.error('Error updating stock', err);
+        fetchItems(); 
+        alert('Error updating stock');
+      }
     }
   };
 
@@ -351,11 +367,11 @@ function App() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handleUpdateStock(item.id, item.quantity, -1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 w-6 h-6 rounded flex items-center justify-center font-bold" disabled={item.quantity <= 0}>-</button>
+                      <button onClick={() => handleUpdateStock(item.id, -1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 w-6 h-6 rounded flex items-center justify-center font-bold" disabled={item.quantity <= 0}>-</button>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.quantity > 10 ? 'bg-green-100 text-green-800' : item.quantity > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
                         {item.quantity} in stock
                       </span>
-                      <button onClick={() => handleUpdateStock(item.id, item.quantity, 1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 w-6 h-6 rounded flex items-center justify-center font-bold">+</button>
+                      <button onClick={() => handleUpdateStock(item.id, 1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 w-6 h-6 rounded flex items-center justify-center font-bold">+</button>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">

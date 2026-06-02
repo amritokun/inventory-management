@@ -50,7 +50,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 app.post('/api/items', upload.single('image'), (req, res) => {
-    const { name, sku, barcode, quantity, price, description } = req.body;
+    const { name, sku, barcode, description } = req.body;
+    const quantity = parseInt(req.body.quantity) || 0;
+    const price = parseFloat(req.body.price) || 0.0;
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
     db.run(`INSERT INTO items (name, sku, barcode, quantity, price, description, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)`, 
         [name, sku, barcode, quantity, price, description, imageUrl], function(err) {
@@ -60,7 +62,9 @@ app.post('/api/items', upload.single('image'), (req, res) => {
 });
 
 app.put('/api/items/:id', upload.single('image'), (req, res) => {
-    const { name, sku, barcode, quantity, price, description } = req.body;
+    const { name, sku, barcode, description } = req.body;
+    const quantity = parseInt(req.body.quantity) || 0;
+    const price = parseFloat(req.body.price) || 0.0;
     const { id } = req.params;
     
     if (req.file) {
@@ -68,26 +72,35 @@ app.put('/api/items/:id', upload.single('image'), (req, res) => {
         db.run(`UPDATE items SET name = ?, sku = ?, barcode = ?, quantity = ?, price = ?, description = ?, image_url = ? WHERE id = ?`,
             [name, sku, barcode, quantity, price, description, imageUrl, id], function(err) {
                 if (err) return res.status(500).json({ error: err.message });
+                if (this.changes === 0) return res.status(404).json({ error: 'Item not found' });
                 res.json({ message: 'Updated with image' });
             });
     } else {
         db.run(`UPDATE items SET name = ?, sku = ?, barcode = ?, quantity = ?, price = ?, description = ? WHERE id = ?`,
             [name, sku, barcode, quantity, price, description, id], function(err) {
                 if (err) return res.status(500).json({ error: err.message });
+                if (this.changes === 0) return res.status(404).json({ error: 'Item not found' });
                 res.json({ message: 'Updated' });
             });
     }
 });
 
 app.patch('/api/items/:id/stock', (req, res) => {
-    db.run(`UPDATE items SET quantity = ? WHERE id = ?`, [req.body.quantity, req.params.id], (err) => {
+    const quantity = parseInt(req.body.quantity);
+    if (isNaN(quantity)) return res.status(400).json({ error: 'Invalid quantity' });
+    db.run(`UPDATE items SET quantity = ? WHERE id = ?`, [quantity, req.params.id], function(err) {
         if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: 'Item not found' });
         res.json({ message: 'Success' });
     });
 });
 
 app.delete('/api/items/:id', (req, res) => {
-    db.run('DELETE FROM items WHERE id = ?', [req.params.id], () => res.json({ message: 'Deleted' }));
+    db.run('DELETE FROM items WHERE id = ?', [req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: 'Item not found' });
+        res.json({ message: 'Deleted' });
+    });
 });
 
 // 6. SPA FALLBACK (Must be last)
