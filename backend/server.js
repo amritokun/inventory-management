@@ -59,6 +59,26 @@ app.post('/api/items', upload.single('image'), (req, res) => {
     });
 });
 
+app.put('/api/items/:id', upload.single('image'), (req, res) => {
+    const { name, sku, barcode, quantity, price, description } = req.body;
+    const { id } = req.params;
+    
+    if (req.file) {
+        const imageUrl = `/uploads/${req.file.filename}`;
+        db.run(`UPDATE items SET name = ?, sku = ?, barcode = ?, quantity = ?, price = ?, description = ?, image_url = ? WHERE id = ?`,
+            [name, sku, barcode, quantity, price, description, imageUrl, id], function(err) {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ message: 'Updated with image' });
+            });
+    } else {
+        db.run(`UPDATE items SET name = ?, sku = ?, barcode = ?, quantity = ?, price = ?, description = ? WHERE id = ?`,
+            [name, sku, barcode, quantity, price, description, id], function(err) {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ message: 'Updated' });
+            });
+    }
+});
+
 app.patch('/api/items/:id/stock', (req, res) => {
     db.run(`UPDATE items SET quantity = ? WHERE id = ?`, [req.body.quantity, req.params.id], (err) => {
         if (err) return res.status(500).json({ error: err.message });

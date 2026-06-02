@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Package, Plus, Trash2, Edit2, Upload, ScanLine, Printer } from 'lucide-react';
+import { Package, Plus, Trash2, Edit2, Upload, ScanLine, Download } from 'lucide-react';
 import Barcode from 'react-barcode';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { useReactToPrint } from 'react-to-print';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 function App() {
   const [items, setItems] = useState([]);
@@ -133,7 +134,8 @@ function App() {
       fetchItems();
     } catch (err) {
       console.error('Error saving item', err);
-      alert('Error saving item');
+      const errorMsg = err.response?.data?.error || err.message || 'Unknown error';
+      alert(`Error saving item: ${errorMsg}`);
     }
   };
 
@@ -175,43 +177,38 @@ function App() {
     }
   };
 
-  const handlePrintAction = useReactToPrint({
-    contentRef: printRef,
-    pageStyle: `
-      @page {
-        size: 50mm 25mm;
-        margin: 0;
-      }
-      @media print {
-        body { margin: 0; }
-        .print-container {
-          width: 50mm;
-          height: 25mm;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          overflow: hidden;
-          page-break-after: always;
-        }
-      }
-    `
-  });
-
-  useEffect(() => {
-    if (isPrinting && printItem) {
-      // Small delay to ensure the barcode SVG has fully finished its internal render
-      const timer = setTimeout(() => {
-        handlePrintAction();
-        setIsPrinting(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isPrinting, printItem, handlePrintAction]);
-
-  const triggerPrint = (item) => {
+  const downloadPDF = async (item) => {
+    // Set the item to print and wait for render
     setPrintItem(item);
-    setIsPrinting(true);
+    
+    // Use a temporary delay to ensure the hidden component renders with the new item
+    setTimeout(async () => {
+      if (!printRef.current) return;
+      
+      try {
+        // Create canvas from the print element
+        const canvas = await html2canvas(printRef.current, {
+          scale: 3, // Higher scale for better quality
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        
+        // 50mm x 25mm in points (1mm = 2.83465 points)
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+          format: [50, 25]
+        });
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, 50, 25);
+        pdf.save(`${item.sku || 'barcode'}.pdf`);
+      } catch (err) {
+        console.error('PDF generation failed', err);
+        alert('Failed to generate PDF');
+      }
+    }, 500);
   };
 
   return (
@@ -301,7 +298,7 @@ function App() {
               
               {showScanner && (
                 <div className="md:col-span-2 mt-4">
-                  <div id="reader" className="w-full max-w-sm mx-auto"></div>
+                  <div id="reader" className="w-full max-sm mx-auto"></div>
                 </div>
               )}
 
@@ -366,15 +363,15 @@ function App() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      {item.barcode && (
-                        <button onClick={() => triggerPrint(item)} className="text-gray-600 hover:text-gray-900 p-1" title="Print Barcode">
-                          <Printer className="w-5 h-5" />
+                      {(item.barcode || item.sku) && (
+                        <button onClick={() => downloadPDF(item)} className="text-green-600 hover:text-green-900 p-1" title="Download PDF Barcode">
+                          <Download className="w-5 h-5" />
                         </button>
                       )}
                       <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-900 p-1">
                         <Edit2 className="w-5 h-5" />
                       </button>
-                      <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-900 p-1">
+                      <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-800 p-1">
                         <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
@@ -393,21 +390,26 @@ function App() {
         </div>
       </div>
 
-      {/* Hidden Printable Component */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
-        <div ref={printRef} className="print-container bg-white flex flex-col items-center justify-center h-full w-full box-border" style={{ width: '50mm', height: '25mm' }}>
-          {printItem && printItem.sku ? (
-            <div className="flex items-center justify-center w-full h-full">
-              <Barcode 
-                value={printItem.sku} 
-                height={55} 
-                fontSize={16} 
-                width={2} 
-                margin={0} 
-                displayValue={true} 
-                textMargin={4}
-              />
-            </div>
+      {/* Hidden Component for PDF generation */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', visibility: 'hidden' }}>
+        <div ref={printRef} style={{ 
+          width: '50mm', 
+          height: '25mm', 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          backgroundColor: 'white' 
+        }}>
+          {printItem && (printItem.barcode || printItem.sku) ? (
+            <Barcode 
+              value={printItem.barcode || printItem.sku} 
+              height={50} 
+              fontSize={14} 
+              width={1.5} 
+              margin={0} 
+              displayValue={true} 
+              textMargin={2}
+            />
           ) : null}
         </div>
       </div>
