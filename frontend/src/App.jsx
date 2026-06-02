@@ -294,7 +294,7 @@ function App() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    1pcs = ₹{Number(item.price).toFixed(2)}
+                    ₹{Number(item.price).toFixed(2)}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
