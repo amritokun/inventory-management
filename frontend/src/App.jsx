@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Package, Plus, Trash2, Edit2, Upload, ScanLine } from 'lucide-react';
+import { Package, Plus, Trash2, Edit2, Upload, ScanLine, Printer } from 'lucide-react';
 import Barcode from 'react-barcode';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import { useReactToPrint } from 'react-to-print';
 
 function App() {
   const [items, setItems] = useState([]);
@@ -13,7 +14,9 @@ function App() {
     name: '', sku: '', barcode: '', quantity: 0, price: 0, description: ''
   });
   const [imageFile, setImageFile] = useState(null);
-  const scannerRef = useRef(null);
+  
+  const [printItem, setPrintItem] = useState(null);
+  const printRef = useRef();
 
   useEffect(() => {
     fetchItems();
@@ -112,6 +115,36 @@ function App() {
     }
   };
 
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    pageStyle: `
+      @page {
+        size: 50mm 25mm;
+        margin: 0;
+      }
+      @media print {
+        body { margin: 0; }
+        .print-container {
+          width: 50mm;
+          height: 25mm;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          overflow: hidden;
+          page-break-after: always;
+        }
+      }
+    `
+  });
+
+  const triggerPrint = (item) => {
+    setPrintItem(item);
+    setTimeout(() => {
+      handlePrint();
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
@@ -161,7 +194,7 @@ function App() {
                   <input required type="number" name="quantity" value={formData.quantity} onChange={handleInputChange} className="w-full border rounded p-2" />
                 </div>
                 <div className="w-1/2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
                   <input required type="number" step="0.01" name="price" value={formData.price} onChange={handleInputChange} className="w-full border rounded p-2" />
                 </div>
               </div>
@@ -240,10 +273,15 @@ function App() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    ${Number(item.price).toFixed(2)}
+                    ₹{Number(item.price).toFixed(2)}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
+                      {item.barcode && (
+                        <button onClick={() => triggerPrint(item)} className="text-gray-600 hover:text-gray-900 p-1" title="Print Barcode">
+                          <Printer className="w-5 h-5" />
+                        </button>
+                      )}
                       <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-900 p-1">
                         <Edit2 className="w-5 h-5" />
                       </button>
@@ -264,6 +302,23 @@ function App() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Hidden Printable Component */}
+      <div style={{ display: 'none' }}>
+        {printItem && printItem.barcode && (
+          <div ref={printRef} className="print-container bg-white flex flex-col items-center justify-center h-full w-full box-border" style={{ width: '50mm', height: '25mm' }}>
+            <div className="text-[10px] font-bold truncate w-full text-center px-1 pt-1 mb-[-5px]">
+              {printItem.name}
+            </div>
+            <div className="scale-[0.6] origin-top">
+              <Barcode value={printItem.barcode} height={30} fontSize={16} width={1.5} margin={0} />
+            </div>
+            <div className="text-[10px] font-bold text-center mt-[-5px] pb-1">
+              ₹{Number(printItem.price).toFixed(2)}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
