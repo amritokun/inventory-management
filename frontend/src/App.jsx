@@ -116,7 +116,7 @@ function App() {
   };
 
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     pageStyle: `
       @page {
         size: 50mm 25mm;
@@ -316,7 +316,7 @@ function App() {
                 <Barcode value={printItem.barcode} height={30} fontSize={16} width={1.5} margin={0} />
               </div>
               <div className="text-[10px] font-bold text-center mt-[-5px] pb-1">
-                ₹{Number(printItem.price).toFixed(2)}
+                1q = ₹{Number(printItem.price).toFixed(2)}
               </div>
             </>
           ) : null}
