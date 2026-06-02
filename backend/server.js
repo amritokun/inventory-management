@@ -136,6 +136,24 @@ app.put('/api/items/:id', upload.single('image'), (req, res) => {
     });
 });
 
+// Quick update stock
+app.patch('/api/items/:id/stock', (req, res) => {
+    const { id } = req.params;
+    const { quantity } = req.body;
+    
+    if (quantity === undefined) {
+        return res.status(400).json({ error: 'Quantity is required' });
+    }
+
+    db.run(`UPDATE items SET quantity = ? WHERE id = ?`, [quantity, id], function(err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json({ message: 'Stock updated successfully', changes: this.changes });
+    });
+});
+
 // Delete an item
 app.delete('/api/items/:id', (req, res) => {
     const { id } = req.params;

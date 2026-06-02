@@ -115,6 +115,23 @@ function App() {
     }
   };
 
+  const handleUpdateStock = async (id, currentQuantity, change) => {
+    const newQuantity = Number(currentQuantity) + change;
+    if (newQuantity < 0) return; // Prevent negative stock
+
+    // Optimistically update UI
+    setItems(prevItems => prevItems.map(item => item.id === id ? { ...item, quantity: newQuantity } : item));
+
+    try {
+      await axios.patch(`http://localhost:3001/api/items/${id}/stock`, { quantity: newQuantity });
+    } catch (err) {
+      console.error('Error updating stock', err);
+      // Revert on failure by refetching
+      fetchItems();
+      alert('Error updating stock');
+    }
+  };
+
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     pageStyle: `
@@ -268,9 +285,13 @@ function App() {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.quantity > 10 ? 'bg-green-100 text-green-800' : item.quantity > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-                      {item.quantity} in stock
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => handleUpdateStock(item.id, item.quantity, -1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 w-6 h-6 rounded flex items-center justify-center font-bold" disabled={item.quantity <= 0}>-</button>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.quantity > 10 ? 'bg-green-100 text-green-800' : item.quantity > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                        {item.quantity} in stock
+                      </span>
+                      <button onClick={() => handleUpdateStock(item.id, item.quantity, 1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 w-6 h-6 rounded flex items-center justify-center font-bold">+</button>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     1pcs = ₹{Number(item.price).toFixed(2)}
