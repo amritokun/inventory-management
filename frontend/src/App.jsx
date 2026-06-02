@@ -19,8 +19,7 @@ function App() {
   const printRef = useRef();
 
   // Scanner State
-  const [scannedItem, setScannedItem] = useState(null);
-  const [scanQuantity, setScanQuantity] = useState(1);
+  const [scannerMode, setScannerMode] = useState('view'); // view, add, remove
   const scanBufferRef = useRef('');
   const scanTimeoutRef = useRef(null);
   const itemsRef = useRef(items);
@@ -38,10 +37,15 @@ function App() {
           const barcodeStr = scanBufferRef.current;
           const item = itemsRef.current.find(i => i.sku === barcodeStr || i.barcode === barcodeStr);
           if (item) {
-            setScannedItem(item);
-            setScanQuantity(1);
+            if (scannerMode === 'add') {
+              handleUpdateStock(item.id, item.quantity, 1);
+            } else if (scannerMode === 'remove') {
+              if (item.quantity > 0) {
+                handleUpdateStock(item.id, item.quantity, -1);
+              }
+            }
           } else {
-            alert(`No item found for scanned barcode: ${barcodeStr}`);
+            console.warn(`No item found for scanned barcode: ${barcodeStr}`);
           }
           scanBufferRef.current = '';
         }
@@ -55,7 +59,7 @@ function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [scannerMode]);
 
   useEffect(() => {
     fetchItems();
@@ -261,18 +265,34 @@ function App() {
             <Package className="w-8 h-8 text-blue-600" />
             Inventory Manager
           </div>
-          <button 
-            onClick={() => {
-              setEditingItem(null);
-              setFormData({ name: '', sku: '', barcode: '', quantity: 0, price: 0, description: '' });
-              setImageFile(null);
-              setShowForm(!showForm);
-              setShowScanner(false);
-            }}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            {showForm ? 'Cancel' : <><Plus className="w-5 h-5" /> Add Item</>}
-          </button>
+          <div className="flex items-center gap-4">
+            <div className="bg-white rounded-lg shadow-sm border p-1 flex">
+              <button 
+                onClick={() => setScannerMode('view')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium ${scannerMode === 'view' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+              >View Mode</button>
+              <button 
+                onClick={() => setScannerMode('add')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium ${scannerMode === 'add' ? 'bg-green-100 text-green-700' : 'text-gray-600 hover:bg-gray-50'}`}
+              >Stock Up (+1)</button>
+              <button 
+                onClick={() => setScannerMode('remove')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium ${scannerMode === 'remove' ? 'bg-red-100 text-red-700' : 'text-gray-600 hover:bg-gray-50'}`}
+              >Sale (-1)</button>
+            </div>
+            <button 
+              onClick={() => {
+                setEditingItem(null);
+                setFormData({ name: '', sku: '', barcode: '', quantity: 0, price: 0, description: '' });
+                setImageFile(null);
+                setShowForm(!showForm);
+                setShowScanner(false);
+              }}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              {showForm ? 'Cancel' : <><Plus className="w-5 h-5" /> Add Item</>}
+            </button>
+          </div>
         </header>
 
         {showForm && (
