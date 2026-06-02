@@ -17,6 +17,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Serve Frontend Build
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
+// Fallback to index.html for React routing
+app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+        res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+    }
+});
+
 // Ensure uploads dir exists
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
