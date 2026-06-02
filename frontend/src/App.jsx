@@ -329,14 +329,17 @@ function App() {
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
         <div ref={printRef} className="print-container bg-white flex flex-col items-center justify-center h-full w-full box-border" style={{ width: '50mm', height: '25mm' }}>
           {printItem && printItem.sku ? (
-            <>
-              <div className="text-[14px] font-bold truncate w-[90%] text-center pt-2">
-                {printItem.name}
-              </div>
-              <div className="scale-[0.8] origin-top mt-1">
-                <Barcode value={printItem.sku} height={40} fontSize={16} width={1.5} margin={0} displayValue={true} />
-              </div>
-            </>
+            <div className="flex items-center justify-center w-full h-full">
+              <Barcode 
+                value={printItem.sku} 
+                height={55} 
+                fontSize={16} 
+                width={2} 
+                margin={0} 
+                displayValue={true} 
+                textMargin={4}
+              />
+            </div>
           ) : null}
         </div>
       </div>
