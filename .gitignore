@@ -1,0 +1,23 @@
+# Node modules
+node_modules/
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+*.db3
+
+# User uploads
+backend/uploads/
+
+# Environment variables
+.env
+
+# Build outputs
+frontend/dist/
+frontend/build/
+
+# IDE/OS files
+.vscode/
+.DS_Store
+*.log
