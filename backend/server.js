@@ -14,6 +14,9 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Serve Frontend Build
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
 // Ensure uploads dir exists
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {

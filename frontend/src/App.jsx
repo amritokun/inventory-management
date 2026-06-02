@@ -90,7 +90,7 @@ function App() {
 
   const fetchItems = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/api/items');
+      const res = await axios.get('/api/items');
       setItems(res.data.items);
     } catch (err) {
       console.error('Error fetching items', err);
