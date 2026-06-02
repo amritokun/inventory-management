@@ -357,12 +357,17 @@ function App() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    {item.sku ? (
-                      <div className="scale-75 origin-left">
-                        <Barcode value={item.sku} height={40} fontSize={14} width={1.5} />
+                    {(item.barcode || item.sku) ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="scale-75 origin-left">
+                          <Barcode value={item.barcode || item.sku} format="CODE39" height={40} fontSize={14} width={1.5} />
+                        </div>
+                        <div className="text-[24px] leading-none" style={{ fontFamily: "'Libre Barcode 39', system-ui" }}>
+                          *{item.barcode || item.sku}*
+                        </div>
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-500">No SKU (Barcode)</span>
+                      <span className="text-sm text-gray-500">No Data</span>
                     )}
                   </td>
                   <td className="px-6 py-4">
@@ -417,15 +422,21 @@ function App() {
           backgroundColor: 'white' 
         }}>
           {printItem && (printItem.barcode || printItem.sku) ? (
-            <Barcode 
-              value={printItem.barcode || printItem.sku} 
-              height={50} 
-              fontSize={14} 
-              width={1.5} 
-              margin={0} 
-              displayValue={true} 
-              textMargin={2}
-            />
+            <div className="flex flex-col items-center">
+              <Barcode 
+                value={printItem.barcode || printItem.sku} 
+                format="CODE39"
+                height={40} 
+                fontSize={10} 
+                width={1.2} 
+                margin={0} 
+                displayValue={true} 
+                textMargin={2}
+              />
+              <div className="text-[20px] leading-none mt-1" style={{ fontFamily: "'Libre Barcode 39', system-ui" }}>
+                *{printItem.barcode || printItem.sku}*
+              </div>
+            </div>
           ) : null}
         </div>
       </div>
