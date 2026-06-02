@@ -305,23 +305,27 @@ function App() {
       </div>
 
       {/* Hidden Printable Component */}
-      <div style={{ display: 'none' }}>
-        {printItem && printItem.barcode && (
-          <div ref={printRef} className="print-container bg-white flex flex-col items-center justify-center h-full w-full box-border" style={{ width: '50mm', height: '25mm' }}>
-            <div className="text-[10px] font-bold truncate w-full text-center px-1 pt-1 mb-[-5px]">
-              {printItem.name}
-            </div>
-            <div className="scale-[0.6] origin-top">
-              <Barcode value={printItem.barcode} height={30} fontSize={16} width={1.5} margin={0} />
-            </div>
-            <div className="text-[10px] font-bold text-center mt-[-5px] pb-1">
-              ₹{Number(printItem.price).toFixed(2)}
-            </div>
-          </div>
-        )}
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+        <div ref={printRef} className="print-container bg-white flex flex-col items-center justify-center h-full w-full box-border" style={{ width: '50mm', height: '25mm' }}>
+          {printItem && printItem.barcode ? (
+            <>
+              <div className="text-[10px] font-bold truncate w-full text-center px-1 pt-1 mb-[-5px]">
+                {printItem.name}
+              </div>
+              <div className="scale-[0.6] origin-top">
+                <Barcode value={printItem.barcode} height={30} fontSize={16} width={1.5} margin={0} />
+              </div>
+              <div className="text-[10px] font-bold text-center mt-[-5px] pb-1">
+                ₹{Number(printItem.price).toFixed(2)}
+              </div>
+            </>
+          ) : null}
+        </div>
       </div>
     </div>
   );
 }
+
+export default App;
 
 export default App;
