@@ -118,11 +118,11 @@ function App() {
 
     try {
       if (editingItem) {
-        await axios.put(`http://localhost:3001/api/items/${editingItem.id}`, data, {
+        await axios.put(`/api/items/${editingItem.id}`, data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
       } else {
-        await axios.post('http://localhost:3001/api/items', data, {
+        await axios.post('/api/items', data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
       }
@@ -150,7 +150,7 @@ function App() {
   const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this item?')) {
       try {
-        await axios.delete(`http://localhost:3001/api/items/${id}`);
+        await axios.delete(`/api/items/${id}`);
         fetchItems();
       } catch (err) {
         console.error('Error deleting item', err);
@@ -163,10 +163,10 @@ function App() {
     if (newQuantity < 0) return; // Prevent negative stock
 
     // Optimistically update UI
-    setItems(prevItems => prevItems.map(item => item.id === id ? { ...item, quantity: newQuantity } : item));
+    setItems(prevItems => (prevItems || []).map(item => item.id === id ? { ...item, quantity: newQuantity } : item));
 
     try {
-      await axios.patch(`http://localhost:3001/api/items/${id}/stock`, { quantity: newQuantity });
+      await axios.patch(`/api/items/${id}/stock`, { quantity: newQuantity });
     } catch (err) {
       console.error('Error updating stock', err);
       // Revert on failure by refetching
@@ -326,12 +326,12 @@ function App() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {items.map(item => (
+              {(items || []).map(item => (
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
                       {item.image_url ? (
-                        <img src={`http://localhost:3001${item.image_url}`} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                        <img src={item.image_url} alt={item.name} className="w-12 h-12 object-cover rounded" />
                       ) : (
                         <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400">
                           <Package className="w-6 h-6" />
