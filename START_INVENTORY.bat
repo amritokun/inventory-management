@@ -6,7 +6,7 @@ echo   INVENTORY MANAGEMENT SYSTEM STARTING
 echo ========================================
 echo.
 echo Closing any old versions...
-REM taskkill /F /IM node.exe /T >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :3001') do taskkill /F /PID %%a >nul 2>&1
 echo.
 echo Starting Database and Screen...
 node server.js
