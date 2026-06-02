@@ -273,7 +273,7 @@ function App() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    ₹{Number(item.price).toFixed(2)}
+                    1q = ₹{Number(item.price).toFixed(2)}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
@@ -325,7 +325,5 @@ function App() {
     </div>
   );
 }
-
-export default App;
 
 export default App;
