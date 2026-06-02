@@ -185,7 +185,8 @@ app.delete('/api/items/:id', (req, res) => {
 
 // Fallback to index.html for React routing
 // This must be AFTER all other routes
-app.get('*', (req, res) => {
+// Express 5 requires named wildcards or specific syntax for catch-all
+app.get('/:splat*', (req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
