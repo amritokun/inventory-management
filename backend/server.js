@@ -15,14 +15,10 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Serve Frontend Build
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
-
-// Fallback to index.html for React routing
-app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-        res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
-    }
-});
+// Use absolute path for reliability with PM2
+const frontendPath = path.resolve(__dirname, '../frontend/dist');
+console.log('Serving frontend from:', frontendPath);
+app.use(express.static(frontendPath));
 
 // Ensure uploads dir exists
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -185,6 +181,12 @@ app.delete('/api/items/:id', (req, res) => {
             res.json({ message: 'Item deleted', changes: this.changes });
         });
     });
+});
+
+// Fallback to index.html for React routing
+// This must be AFTER all other routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 app.listen(PORT, () => {
