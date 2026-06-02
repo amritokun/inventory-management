@@ -57,6 +57,9 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
 
 // Get all items
 app.get('/api/items', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     db.all('SELECT * FROM items ORDER BY id DESC', [], (err, rows) => {
         if (err) {
             res.status(500).json({ error: err.message });
